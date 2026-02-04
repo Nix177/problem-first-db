@@ -1,5 +1,6 @@
 import json
 import random
+import requests
 
 # Simulating LangChain LLM integration
 class MockLangChainLLM:
@@ -36,6 +37,20 @@ def run_analysis():
             result = analyze_sentiment(post)
             if result["is_valid_opportunity"]:
                 opportunities.append(result)
+                
+                # Send to Backend
+                try:
+                    payload = {
+                        "title": result["original_text"], # Using text as title for now
+                        "tags": ["extracted", "pain-point"]
+                    }
+                    response = requests.post("http://localhost:3000/api/problems", json=payload)
+                    if response.status_code == 201:
+                        print(f" [+] Successfully posted to backend: {payload['title'][:30]}...")
+                    else:
+                        print(f" [-] Failed to post: {response.status_code}")
+                except Exception as e:
+                    print(f" [!] Error connecting to backend: {e}")
     
     print(json.dumps(opportunities, indent=2))
 
