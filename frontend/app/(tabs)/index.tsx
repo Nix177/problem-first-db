@@ -1,151 +1,111 @@
-import { Image, StyleSheet, Platform, ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, FlatList, RefreshControl, View, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { GradientBackground } from '@/components/GradientBackground';
+import { ProblemCard, Problem } from '@/components/ProblemCard';
+import { FrustraTheme } from '@/constants/FrustraTheme';
+import { ThemedText } from '@/components/themed-text';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const API_URL = 'http://localhost:3000/api'; // Or your local IP if running on device
 
 export default function HomeScreen() {
-  const problems = [
-    { id: 1, title: "Can't find reliable contractors", score: 85, color: '#FF6B6B', isFounding: false },
-    { id: 2, title: "Too many subscription emails", score: 92, color: '#4ECDC4', isFounding: true },
-    { id: 3, title: "Cooking for one is wasteful", score: 1050, color: '#FFE66D', isFounding: true },
-    { id: 4, title: "Networking events are awkward", score: 64, color: '#1A535C', isFounding: false },
-  ];
+  const [problems, setProblems] = useState<Problem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProblems = async () => {
+    try {
+      const response = await fetch(`${API_URL}/problems`);
+      const data = await response.json();
+      // Sort by score descending
+      setProblems(data.sort((a: any, b: any) => b.score - a.score));
+    } catch (error) {
+      console.error(error);
+      // Alert.alert("Error", "Could not fetch problems. ensure backend is running.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProblems();
+  }, []);
+
+  const handleVote = async (id: number) => {
+    try {
+      await fetch(`${API_URL}/vote/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: "user_mobile_1" }) // Mock User
+      });
+    } catch (e) {
+      console.error("Vote failed", e);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProblems();
+  };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Frustra</ThemedText>
-        <HelloWave />
-      </ThemedView>
-
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Le Catalogue de Problèmes</ThemedText>
-        <ThemedText>
-          Transformez vos plaintes en <ThemedText type="defaultSemiBold">actifs entrepreneuriaux</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-
-      {problems.map((p) => (
-        <View key={p.id} style={[styles.card, { borderLeftColor: p.color }]}>
-          <View style={styles.headerRow}>
-            <Text style={styles.cardTitle}>{p.title}</Text>
-            {p.isFounding && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>★ Founding Problem</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>{p.score} Votes (Moi aussi)</Text>
-          </View>
-
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Moi aussi !</Text>
-            </TouchableOpacity>
-            {p.score > 1000 && (
-              <TouchableOpacity style={[styles.button, styles.premiumButton]}>
-                <Text style={styles.buttonText}>Voir Rapport (Premium)</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+    <GradientBackground>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <ThemedText type="title" style={styles.appTitle}>Frustra</ThemedText>
+          <ThemedText style={styles.appSubtitle}>The Problem Database</ThemedText>
         </View>
-      ))}
 
-    </ParallaxScrollView>
+        {loading ? (
+          <ActivityIndicator color={FrustraTheme.colors.primary} size="large" style={{ marginTop: 50 }} />
+        ) : (
+          <FlatList
+            data={problems}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <ProblemCard problem={item} onVote={handleVote} />
+            )}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={FrustraTheme.colors.primary}
+              />
+            }
+          />
+        )}
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-  card: {
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    elevation: 5,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  cardTitle: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: 'bold',
+  container: {
     flex: 1,
-    marginRight: 8,
   },
-  badge: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+  header: {
+    padding: FrustraTheme.spacing.m,
+    paddingTop: 40,
+    marginBottom: 0,
   },
-  badgeText: {
-    color: '#000',
-    fontSize: 10,
-    fontWeight: 'bold',
+  appTitle: {
+    fontFamily: 'SpaceMono', // or default bold
+    color: '#FFF',
+    fontSize: 32,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
-  scoreBadge: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginBottom: 12,
+  appSubtitle: {
+    color: FrustraTheme.colors.primary,
+    fontSize: 14,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: 4,
+    opacity: 0.8,
   },
-  scoreText: {
-    color: '#DDD',
-    fontSize: 12,
+  listContent: {
+    padding: FrustraTheme.spacing.m,
+    paddingTop: 0,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  button: {
-    backgroundColor: '#0a7ea4',
-    padding: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  premiumButton: {
-    backgroundColor: '#5A189A',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 12,
-  }
 });
