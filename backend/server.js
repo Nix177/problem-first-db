@@ -30,14 +30,31 @@ app.post('/api/problems', (req, res) => {
     res.status(201).json(newProblem);
 });
 
+const validationEngine = require('./ValidationEngine');
+
 app.post('/api/vote/:id', (req, res) => {
-    const problem = problems.find(p => p.id === parseInt(req.params.id));
-    if (problem) {
-        problem.score += 1;
-        res.json(problem);
-    } else {
-        res.status(404).json({ message: "Problem not found" });
+    const problemId = parseInt(req.params.id);
+    const userId = req.body.userId;
+
+    // 1. Check existence
+    const problem = problems.find(p => p.id === problemId);
+    if (!problem) {
+        return res.status(404).json({ message: "Problem not found" });
     }
+
+    // 2. Validate Vote
+    const validation = validationEngine.vote(problemId, userId);
+    if (!validation.success) {
+        return res.status(400).json({ message: validation.reason });
+    }
+
+    // 3. Apply Vote
+    problem.score += 1;
+    res.json({
+        problem,
+        message: "Vote recorded",
+        total_votes: validation.new_count
+    });
 });
 
 app.listen(PORT, () => {

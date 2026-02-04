@@ -1,4 +1,4 @@
-const problems = require('./server').problems || []; // Access via server or DB in real app
+// Validation Engine - Standalone Logic
 
 // Validation Engine
 // Responsibilities: "Me Too" voting, Identity Verification (Anti-Bot)
