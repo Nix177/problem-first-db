@@ -1,112 +1,311 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, ScrollView, View, Dimensions, TouchableOpacity } from 'react-native';
+import { GradientBackground } from '@/components/GradientBackground';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { FrustraTheme } from '@/constants/FrustraTheme';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export default function TabTwoScreen() {
+const API_URL = 'http://localhost:3000/api';
+const { width } = Dimensions.get('window');
+
+interface CategoryData {
+  name: string;
+  count: number;
+  color: string;
+}
+
+export default function TrendingScreen() {
+  const [problems, setProblems] = useState<any[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const res = await fetch(`${API_URL}/problems`);
+      const data = await res.json();
+      setProblems(data);
+
+      // Calculate category breakdown
+      const tagCounts: { [key: string]: number } = {};
+      data.forEach((p: any) => {
+        p.tags?.forEach((tag: string) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      });
+
+      const colors = ['#00F0FF', '#FF0066', '#8B5CF6', '#10B981', '#F59E0B', '#EC4899'];
+      const categoryArray = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([name, count], i) => ({ name, count, color: colors[i % colors.length] }));
+
+      setCategories(categoryArray);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const totalVotes = problems.reduce((sum, p) => sum + p.score, 0);
+  const avgScore = problems.length > 0 ? Math.round(totalVotes / problems.length) : 0;
+  const topProblem = problems.length > 0 ? problems.reduce((a, b) => a.score > b.score ? a : b) : null;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
+    <GradientBackground>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <ThemedText style={styles.headerLabel}>ANALYTICS</ThemedText>
+          <ThemedText style={styles.headerTitle}>Market Intelligence</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>Real-time insights from frustration data</ThemedText>
+        </View>
+
+        {/* Key Metrics */}
+        <View style={styles.metricsRow}>
+          <LinearGradient colors={['rgba(0, 240, 255, 0.15)', 'rgba(0, 240, 255, 0.05)']} style={styles.metricCard}>
+            <ThemedText style={styles.metricValue}>${(totalVotes * 0.15).toFixed(0)}K</ThemedText>
+            <ThemedText style={styles.metricLabel}>Est. Market Value</ThemedText>
+          </LinearGradient>
+          <LinearGradient colors={['rgba(255, 0, 102, 0.15)', 'rgba(255, 0, 102, 0.05)']} style={styles.metricCard}>
+            <ThemedText style={[styles.metricValue, { color: FrustraTheme.colors.secondary }]}>{avgScore}</ThemedText>
+            <ThemedText style={styles.metricLabel}>Avg. Validation</ThemedText>
+          </LinearGradient>
+        </View>
+
+        {/* Category Breakdown */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>📊 Category Breakdown</ThemedText>
+          <View style={styles.categoryGrid}>
+            {categories.map((cat, index) => (
+              <TouchableOpacity key={index} style={styles.categoryCard}>
+                <View style={[styles.categoryBar, { backgroundColor: cat.color, width: `${(cat.count / Math.max(...categories.map(c => c.count))) * 100}%` }]} />
+                <View style={styles.categoryInfo}>
+                  <ThemedText style={styles.categoryName}>{cat.name}</ThemedText>
+                  <ThemedText style={[styles.categoryCount, { color: cat.color }]}>{cat.count} problems</ThemedText>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Top Opportunity */}
+        {topProblem && (
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>🚀 Top Opportunity</ThemedText>
+            <LinearGradient
+              colors={['rgba(0, 240, 255, 0.1)', 'rgba(139, 92, 246, 0.1)']}
+              style={styles.topCard}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            >
+              <ThemedText style={styles.topTitle}>{topProblem.title}</ThemedText>
+              <View style={styles.topStats}>
+                <View style={styles.topStat}>
+                  <ThemedText style={styles.topStatValue}>{topProblem.score.toLocaleString()}</ThemedText>
+                  <ThemedText style={styles.topStatLabel}>Votes</ThemedText>
+                </View>
+                <View style={styles.topStat}>
+                  <ThemedText style={[styles.topStatValue, { color: '#10B981' }]}>High</ThemedText>
+                  <ThemedText style={styles.topStatLabel}>Demand</ThemedText>
+                </View>
+                <View style={styles.topStat}>
+                  <ThemedText style={[styles.topStatValue, { color: FrustraTheme.colors.secondary }]}>$$$</ThemedText>
+                  <ThemedText style={styles.topStatLabel}>Value</ThemedText>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+        )}
+
+        {/* Investment CTA */}
+        <View style={styles.section}>
+          <LinearGradient
+            colors={['rgba(139, 92, 246, 0.2)', 'rgba(236, 72, 153, 0.2)']}
+            style={styles.investCard}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          >
+            <ThemedText style={styles.investTitle}>For Investors</ThemedText>
+            <ThemedText style={styles.investText}>
+              Access premium market reports, startup matching, and early-stage deal flow based on validated frustration data.
             </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+            <TouchableOpacity style={styles.investButton}>
+              <ThemedText style={styles.investButtonText}>Request Access →</ThemedText>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+
+        <View style={styles.footer}>
+          <ThemedText style={styles.footerText}>Data refreshes every 24 hours</ThemedText>
+        </View>
+      </ScrollView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
-  titleContainer: {
+  content: {
+    paddingBottom: 40,
+  },
+  header: {
+    padding: 24,
+    paddingTop: 60,
+  },
+  headerLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 3,
+    color: FrustraTheme.colors.secondary,
+    marginBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: FrustraTheme.colors.textDim,
+    marginTop: 8,
+  },
+  metricsRow: {
     flexDirection: 'row',
-    gap: 8,
+    paddingHorizontal: 16,
+    gap: 12,
+    marginBottom: 24,
+  },
+  metricCard: {
+    flex: 1,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  metricValue: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: FrustraTheme.colors.primary,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: FrustraTheme.colors.textDim,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  section: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 16,
+  },
+  categoryGrid: {
+    gap: 12,
+  },
+  categoryCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  categoryBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    opacity: 0.2,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+  },
+  categoryInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  categoryName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFF',
+    textTransform: 'capitalize',
+  },
+  categoryCount: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  topCard: {
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 240, 255, 0.2)',
+  },
+  topTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 16,
+    lineHeight: 26,
+  },
+  topStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  topStat: {
+    alignItems: 'center',
+  },
+  topStatValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: FrustraTheme.colors.primary,
+  },
+  topStatLabel: {
+    fontSize: 12,
+    color: FrustraTheme.colors.textDim,
+    marginTop: 4,
+  },
+  investCard: {
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  investTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 12,
+  },
+  investText: {
+    fontSize: 14,
+    color: FrustraTheme.colors.textDim,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  investButton: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  investButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+  },
+  footer: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  footerText: {
+    color: FrustraTheme.colors.textDim,
+    fontSize: 12,
   },
 });
