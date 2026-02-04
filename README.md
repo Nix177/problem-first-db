@@ -1,13 +1,14 @@
-# Problem-First Database (Application 4)
+# Frustra : Le Catalogue de Problèmes
 
 ## Vision
-A "Problem-First" database for entrepreneurs. Instead of starting with an idea, we start with a **validated problem**.
-This platform aggregates "pain points" using a smart scraping engine and validates them through a voting system.
+**Transformer la plainte en actif.**
+Frustra identifie les "Founding Problems" sur les réseaux sociaux et permet aux entrepreneurs de valider leur marché avant d'écrire une ligne de code.
 
-## Components
-- **FrustrationMiner (Scraper):** Extracts problems from social media (Reddit, Twitter, etc.).
-- **CrowdVoter (Validation):** Community voting on problems to assess market demand.
-- **StartupNexus (Matching):** Connects valid problems with solution providers.
+## Piliers Techniques
+- **SentimentAnalyzer (Python):** Extraction de problèmes via LLM (Mock/LangChain).
+- **ValidationEngine (Node.js):** Système de vote "Moi aussi" avec vérification d'identité.
+- **MarketReportGen (Go):** Génération de rapports premium pour les investisseurs (Seuil > 1000 votes).
+
 
 ## Tech Stack
 - **Backend:** Node.js (Express) or Go.

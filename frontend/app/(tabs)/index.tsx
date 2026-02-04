@@ -7,10 +7,10 @@ import { ThemedView } from '@/components/ThemedView';
 
 export default function HomeScreen() {
   const problems = [
-    { id: 1, title: "Can't find reliable contractors", score: 85, color: '#FF6B6B' },
-    { id: 2, title: "Too many subscription emails", score: 92, color: '#4ECDC4' },
-    { id: 3, title: "Cooking for one is wasteful", score: 78, color: '#FFE66D' },
-    { id: 4, title: "Networking events are awkward", score: 64, color: '#1A535C' },
+    { id: 1, title: "Can't find reliable contractors", score: 85, color: '#FF6B6B', isFounding: false },
+    { id: 2, title: "Too many subscription emails", score: 92, color: '#4ECDC4', isFounding: true },
+    { id: 3, title: "Cooking for one is wasteful", score: 1050, color: '#FFE66D', isFounding: true },
+    { id: 4, title: "Networking events are awkward", score: 64, color: '#1A535C', isFounding: false },
   ];
 
   return (
@@ -23,26 +23,42 @@ export default function HomeScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Problèmes Validés</ThemedText>
+        <ThemedText type="title">Frustra</ThemedText>
         <HelloWave />
       </ThemedView>
 
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Top Frustrations de la Semaine</ThemedText>
+        <ThemedText type="subtitle">Le Catalogue de Problèmes</ThemedText>
         <ThemedText>
-          Voici les problèmes détectés par <ThemedText type="defaultSemiBold">FrustrationMiner</ThemedText> qui cherchent une solution.
+          Transformez vos plaintes en <ThemedText type="defaultSemiBold">actifs entrepreneuriaux</ThemedText>.
         </ThemedText>
       </ThemedView>
 
       {problems.map((p) => (
         <View key={p.id} style={[styles.card, { borderLeftColor: p.color }]}>
-          <Text style={styles.cardTitle}>{p.title}</Text>
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>{p.score}% Besoin</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.cardTitle}>{p.title}</Text>
+            {p.isFounding && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>★ Founding Problem</Text>
+              </View>
+            )}
           </View>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.buttonText}>J'ai ce problème</Text>
-          </TouchableOpacity>
+
+          <View style={styles.scoreBadge}>
+            <Text style={styles.scoreText}>{p.score} Votes (Moi aussi)</Text>
+          </View>
+
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.button}>
+              <Text style={styles.buttonText}>Moi aussi !</Text>
+            </TouchableOpacity>
+            {p.score > 1000 && (
+              <TouchableOpacity style={[styles.button, styles.premiumButton]}>
+                <Text style={styles.buttonText}>Voir Rapport (Premium)</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       ))}
 
@@ -78,11 +94,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     elevation: 5,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   cardTitle: {
     color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,
+    flex: 1,
+    marginRight: 8,
+  },
+  badge: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  badgeText: {
+    color: '#000',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   scoreBadge: {
     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -96,14 +130,22 @@ const styles = StyleSheet.create({
     color: '#DDD',
     fontSize: 12,
   },
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   button: {
     backgroundColor: '#0a7ea4',
     padding: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
+  premiumButton: {
+    backgroundColor: '#5A189A',
+  },
   buttonText: {
     color: 'white',
     fontWeight: '600',
+    fontSize: 12,
   }
 });
